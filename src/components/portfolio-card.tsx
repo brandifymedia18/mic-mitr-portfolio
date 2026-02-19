@@ -21,7 +21,10 @@ interface PortfolioCardProps {
 export function PortfolioCard({ item }: PortfolioCardProps) {
   const imageUrl = item.image;
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isPiPSupported, setIsPiPSupported] = useState(false);
 
@@ -36,13 +39,13 @@ export function PortfolioCard({ item }: PortfolioCardProps) {
 
     const handleEnterPiP = () => {
       if (videoElement.paused) {
-        setIsPlaying(false);
+        setIsVideoPlaying(false);
       }
     };
 
     const handleLeavePiP = () => {
       if (videoElement.paused) {
-        setIsPlaying(false);
+        setIsVideoPlaying(false);
       }
     };
 
@@ -55,12 +58,22 @@ export function PortfolioCard({ item }: PortfolioCardProps) {
     };
   }, []);
 
-  const handlePlayPause = () => {
+  const handleVideoPlayPause = () => {
     if (videoRef.current) {
       if (videoRef.current.paused) {
         videoRef.current.play();
       } else {
         videoRef.current.pause();
+      }
+    }
+  };
+
+  const handleAudioPlayPause = () => {
+    if (audioRef.current) {
+      if (audioRef.current.paused) {
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
       }
     }
   };
@@ -85,37 +98,41 @@ export function PortfolioCard({ item }: PortfolioCardProps) {
     <Card className="group overflow-hidden bg-card border-border/60 hover:border-primary transition-colors duration-300 flex flex-col">
       <CardHeader className="p-0">
         <div
-          className="aspect-video relative overflow-hidden bg-muted cursor-pointer"
+          className="aspect-video relative overflow-hidden bg-muted"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onClick={handlePlayPause}
         >
           {item.video ? (
-            <>
+            <div
+              className="w-full h-full cursor-pointer"
+              onClick={handleVideoPlayPause}
+            >
               <video
                 ref={videoRef}
                 src={item.video}
                 poster={imageUrl}
                 playsInline
                 controls={false}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                onEnded={() => setIsPlaying(false)}
+                controlsList="nodownload"
+                onPlay={() => setIsVideoPlaying(true)}
+                onPause={() => setIsVideoPlaying(false)}
+                onEnded={() => setIsVideoPlaying(false)}
                 className="object-contain w-full h-full"
+                onContextMenu={(e) => e.preventDefault()}
               />
               <div
                 className={cn(
                   'absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity duration-300 pointer-events-none',
-                  !isPlaying
+                  !isVideoPlaying
                     ? 'opacity-100'
                     : isHovered
                     ? 'opacity-100'
                     : 'opacity-0'
                 )}
-                aria-label={isPlaying ? 'Pause' : 'Play'}
+                aria-label={isVideoPlaying ? 'Pause' : 'Play'}
               >
                 <div className="w-16 h-16 bg-primary/80 rounded-full flex items-center justify-center text-primary-foreground group-hover:bg-primary transition-colors">
-                  {isPlaying ? (
+                  {isVideoPlaying ? (
                     <Pause className="w-8 h-8" />
                   ) : (
                     <Play className="w-8 h-8 fill-current ml-1" />
@@ -130,15 +147,18 @@ export function PortfolioCard({ item }: PortfolioCardProps) {
                   aria-label="Toggle Picture-in-Picture"
                   className={cn(
                     'absolute bottom-2 right-2 h-8 w-8 text-white bg-black/50 hover:bg-black/75 hover:text-white transition-opacity',
-                    isHovered || !isPlaying ? 'opacity-100' : 'opacity-0'
+                    isHovered || !isVideoPlaying ? 'opacity-100' : 'opacity-0'
                   )}
                 >
                   <PictureInPicture className="h-4 w-4" />
                 </Button>
               )}
-            </>
+            </div>
           ) : item.audio ? (
-            <div className="relative w-full h-full">
+            <div
+              className="relative w-full h-full cursor-pointer"
+              onClick={handleAudioPlayPause}
+            >
               {imageUrl && (
                 <Image
                   src={imageUrl}
@@ -148,13 +168,34 @@ export function PortfolioCard({ item }: PortfolioCardProps) {
                   className="object-contain w-full h-full"
                 />
               )}
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-4">
-                <audio
-                  src={item.audio}
-                  controls
-                  controlsList="nodownload"
-                  className="w-full"
-                />
+              <audio
+                ref={audioRef}
+                src={item.audio}
+                controls={false}
+                controlsList="nodownload"
+                onPlay={() => setIsAudioPlaying(true)}
+                onPause={() => setIsAudioPlaying(false)}
+                onEnded={() => setIsAudioPlaying(false)}
+                onContextMenu={(e) => e.preventDefault()}
+              />
+              <div
+                className={cn(
+                  'absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity duration-300',
+                  !isAudioPlaying
+                    ? 'opacity-100'
+                    : isHovered
+                    ? 'opacity-100'
+                    : 'opacity-0'
+                )}
+                aria-label={isAudioPlaying ? 'Pause' : 'Play'}
+              >
+                <div className="w-16 h-16 bg-primary/80 rounded-full flex items-center justify-center text-primary-foreground group-hover:bg-primary transition-colors">
+                  {isAudioPlaying ? (
+                    <Pause className="w-8 h-8" />
+                  ) : (
+                    <Play className="w-8 h-8 fill-current ml-1" />
+                  )}
+                </div>
               </div>
             </div>
           ) : imageUrl ? (
